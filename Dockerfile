@@ -26,7 +26,7 @@ WORKDIR /usr/src/app
 # Add the generated "dist" folder in jenkins pipeline
 ADD dist ./dist
 # Add config/update-build-env.js to substitute the environment variables in `main-**.js` files
-ADD config ./config
+# ADD config ./config
 # Add package.json for command line used in CMD
 ADD package.json ./
 

@@ -5,7 +5,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "test": "ng test",
+    "test": "ng test --code-coverage=true",
+    "test:headless": "ng test --code-coverage=true --watch=false --karma-config=./karma-headless.conf.js",
     "lint": "ng lint",
     "prod": "ng build --prod --base-href / --configuration=production",
     "server:prod": "nginx -g 'daemon off;'",
@@ -40,10 +41,13 @@
     "karma-chrome-launcher": "~2.2.0",
     "karma-coverage-istanbul-reporter": "~2.0.1",
     "karma-jasmine": "~2.0.1",
+    "karma-junit-reporter": "^1.2.0",
     "karma-jasmine-html-reporter": "^1.4.0",
+    "karma-sonarqube-unit-reporter": "0.0.21",
     "protractor": "~5.4.0",
     "ts-node": "~7.0.0",
     "tslint": "~5.15.0",
-    "typescript": "~3.4.3"
+    "typescript": "~3.4.3",
+    "puppeteer": "1.16.0"
   }
 }

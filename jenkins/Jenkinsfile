@@ -52,6 +52,12 @@ spec:
     command:
     - cat
     tty: true
+  # needed to run tests
+  #- name: chrome-headless
+  #  image: justinribeiro/chrome-headless:latest
+  #  command:
+  #  - cat
+  #  tty: true
   volumes:
   # use host docker
   - name: docker-sock
@@ -77,19 +83,13 @@ spec:
             steps{
                 container('node'){
                     container('docker'){
-                        script {
-                            // sh """
-                            //     rm -rf oc-build && mkdir -p oc-build
-                            //     cp -rfv dist oc-build/ 2> /dev/null
-                            //     cp Dockerfile oc-build/
-                            //     cp package.json oc-build/
-                            //     cp -rfv nginx oc-build/
-                            //     ls -lsa oc-build/
-                            // """
-                            docker.withRegistry('', 'dockerhub') {
-                                customImage = docker.build("diegoruizrei/infra-ui-test:${env.GIT_COMMIT}", "--network=host .")
+                        //container('chrome-headless'){
+                            script {
+                                docker.withRegistry('', 'dockerhub') {
+                                    customImage = docker.build("diegoruizrei/infra-ui-test:${env.GIT_COMMIT}", "--network=host .")
+                                }
                             }
-                        }
+                        //}
                     }
                 }
             }

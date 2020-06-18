@@ -31,7 +31,15 @@ RUN npm install
 
 COPY . /usr/src/app
 
-#FROM base AS release
+
+#
+# ---- Test ----
+FROM dependencies AS tests
+RUN npm run test:headless
+
+#
+# ---- Build ----
+FROM dependencies AS build
 #COPY --from=dependencies /usr/src/app/node_modules ./node_modules
 RUN npm run prod
 

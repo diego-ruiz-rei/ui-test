@@ -18,14 +18,14 @@ module.exports = function(config) {
       captureConsole: Boolean(process.env.KARMA_ENABLE_CONSOLE)
     },
     junitReporter: {
-      outputDir: path.join(__dirname, '../reports/junit/'),
+      outputDir: path.join(__dirname, './reports/junit/'),
       outputFile: 'test-results.xml',
       useBrowserName: false,
       suite: '' // Will become the package name attribute in xml testsuite element
     },
     coverageIstanbulReporter: {
       reports: ['html', 'lcovonly', 'text-summary'],
-      dir: path.join(__dirname, '../reports/coverage'),
+      dir: path.join(__dirname, './reports/coverage'),
       fixWebpackSourcePaths: true
     },
     sonarQubeUnitReporter: {

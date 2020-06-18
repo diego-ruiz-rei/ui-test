@@ -33,7 +33,7 @@ RUN npm install
 #
 # ---- Release ----
 FROM base AS release
-#COPY --from=dependencies /usr/src/app/node_modules ./node_modules
+COPY --from=dependencies /usr/src/app/node_modules ./node_modules
 RUN npm run prod
 RUN mkdir -p /usr/src/app/oc_build
 RUN cp -rfv dist oc-build/ 2> /dev/null

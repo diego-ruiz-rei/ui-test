@@ -7,6 +7,8 @@
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
+    "prod": "ng build --prod --base-href / --configuration=production",
+    "server:prod": "nginx -g 'daemon off;'",
     "e2e": "ng e2e"
   },
   "private": true,

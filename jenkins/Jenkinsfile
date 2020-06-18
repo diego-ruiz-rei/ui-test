@@ -1,0 +1,267 @@
+#!groovy
+// This script works with native Jenkins pipeline
+// Jenkins declarative Pipeline as it is the future: https://stackoverflow.com/questions/44657896/jenkins-pipeline-jenkinsfile-node-and-pipeline-directives
+library identifier: "pipeline-library@master",
+        retriever: modernSCM(
+                [
+                        $class: "GitSCMSource",
+                        remote: "https://github.com/REI-Systems/pipeline-library.git"
+                ]
+        )
+
+// Define variables for the pipeline usage
+def sonarLogin, sonarPassword
+def DOCKERFILE_PATH, APPLICATION_BUILD_NAME, DOCKER_REGISTRY, SONARQUBE_SECRET, SONARQUBE_URL, APP_VERSION, HOSTNAME_SUFFIX, SELENIUM_HUB, APPLICATION_URL_DEV
+def clusterUrl = openshift.cluster();
+echo "Now using cluster with url ${clusterUrl}"
+
+pipeline {
+    agent {
+        kubernetes {
+      yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    some-label: maven-build
+spec:
+  containers:
+  # used to run maven processes
+  - name: node
+    image: node:latest
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - mountPath: /root/.npm
+      name: node-slave-pvc
+      readOnly: false
+  # used to run docker processes
+  - name: docker
+    image: docker:latest
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - mountPath: /var/run/docker.sock
+      name: docker-sock
+  # used to run argocd/git processes
+  - name: tools
+    image: argoproj/argo-cd-ci-builder:latest
+    command:
+    - cat
+    tty: true
+  volumes:
+  # use host docker
+  - name: docker-sock
+    hostPath: 
+      path: /var/run/docker.sock
+  # cache maven dependencies onto pvc between builds
+  - name: node-slave-pvc
+    hostPath:
+      path: /root/.npm
+"""
+        }
+    }
+
+    options {
+        // set a timeout of 20 minutes for this pipeline
+        timeout(time: 75, unit: 'MINUTES')
+    }
+
+    // Pipeline Stages start here
+    // Requeres at least one stage
+    stages {
+        // Checkout source code
+        // This is required as Pipeline code is originally checkedout to
+        // Jenkins Master but this will also pull this same code to this slave
+        stage('Install Dev Modules') {
+            steps {
+                script {
+                    container('node') {
+                        //notifySlack('STARTED', 'Job started!')
+
+                        // Report back to github: Status Check PENDING
+                        //notifyGithubStatusCheck('PENDING', 'Continuous integration started!')
+
+                        // Report back to github: Status Check PENDING
+                        //notifyGithubStatusCheck('PENDING', 'Continuous integration: Build the App!')
+
+                        //sh 'npm config set registry https://nexus-cis-ap-build.apps.scomet.reidevops.net/repository/npm/'
+                        sh 'npm install'
+                    }
+                }
+            }
+        }
+
+        // Run Maven unit tests
+        // stage('Unit Test') {
+        //     when {
+        //         expression {
+        //             return ((env.BRANCH_NAME.startsWith('PR-') && env.CHANGE_BRANCH.startsWith('feature-') && env.CHANGE_TARGET.startsWith('develop')) || env.BRANCH_NAME.startsWith('feature-') || env.BRANCH_NAME == 'develop')
+        //         }
+        //     }
+        //     steps {
+        //         // Report back to github: Status Check PENDING
+        //         notifyGithubStatusCheck('PENDING', 'Continuous integration: Run unit test!')
+
+        //         sh 'CI=true npm run test:headless'
+        //     }
+        //     post {
+        //         always {
+        //             // publish  report
+        //             publishHTML(target: [
+        //               reportDir            : "./reports/coverage",
+        //               reportFiles          : 'index.html',
+        //               reportName           : 'Istanbul Report (Code Coverage)',
+        //               keepAll              : true,
+        //               alwaysLinkToLastBuild: true,
+        //               allowMissing         : false
+        //             ])
+        //         }
+        //     }
+        // }
+
+        // stage('SonarQube Code Analysis') {
+        //     when {
+        //         expression {
+        //             return ((env.BRANCH_NAME.startsWith('PR-') && env.CHANGE_BRANCH.startsWith('feature-') && env.CHANGE_TARGET.startsWith('develop')) || env.BRANCH_NAME.startsWith('feature-') || env.BRANCH_NAME == 'develop')
+        //         }
+        //     }
+        //     steps {
+        //         // Report back to github: Status Check PENDING
+        //         notifyGithubStatusCheck('PENDING', 'Continuous integration: Run code analysis!')
+
+        //         script {
+        //             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "${env.NAMESPACE}-${SONARQUBE_SECRET}", passwordVariable: 'pass', usernameVariable: 'user']]) {
+        //                 sonarLogin = '${user}'
+        //                 sonarPassword = '${pass}'
+        //                 // Run Sonar in this block would result into authorization issue. As the ${user} and ${pass} are encrypted ***** **** instead of plan values
+        //             }
+
+        //             withSonarQubeEnv('SonarQube') {
+        //                 // Create a new SonarQube analysis and dashboard for this new/updated feature branch / app
+        //                 def additionalParams =  (env.BRANCH_NAME.startsWith('feature-')) ? " -Dsonar.projectKey=${APPLICATION_BUILD_NAME} -Dsonar.projectName=${APPLICATION_BUILD_NAME} -Dsonar.projectVersion=${env.GIT_COMMIT.substring(0, 6)}" : ""
+
+        //                 // Run Sonar in this block to ensure user/pass are not encrypted
+        //                 sh "sonar-scanner -Dsonar.host.url=${SONARQUBE_URL} -Dsonar.login=${sonarLogin} -Dsonar.password=${sonarPassword} ${additionalParams}"
+        //             }
+
+        //             // try again when JENKINS route has SSL valid: https://stackoverflow.com/questions/45693418/sonarqube-quality-gate-not-sending-webhook-to-jenkins
+        //             // sleep(10)
+        //             timeout(time: 5, unit: 'MINUTES') { // Just in case something goes wrong, pipeline will be killed after a timeout
+        //                 def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
+        //                 echo "Pipeline quality gate status: ${qg.status}"
+        //                 if (qg.status == 'ERROR') {
+        //                     echo "Pipeline aborted due to quality gate failure: ${qg.status}"
+        //                     // TODO: swap the comment out the 2 lines below to mark the build as failed when quality gate failed
+        //                     input message: 'SQ Quality Gate Failed, continue?'
+        //                     //error "Pipeline aborted due to quality gate failure: ${qg.status}"
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+
+        // Build Container Image using the artifacts produced in previous stages
+        stage('Build Image') {
+            steps {
+                container('node'){
+                    script {
+                        sh """
+                            npm run prod
+                            rm -rf oc-build && mkdir -p oc-build
+                            cp -rfv dist oc-build/ 2> /dev/null
+                            cp Dockerfile oc-build/
+                            cp package.json oc-build/
+                            cp -rfv config oc-build/
+                            cp -rfv nginx oc-build/
+                            ls -lsa oc-build/
+                        """
+                    }
+                }
+                container('docker'){
+                    script {
+                        docker.withRegistry('', 'dockerhub') {
+                            def customImage = docker.build("diegoruizrei/infra-ui-test:${env.GIT_COMMIT}", "--network=host ./oc-build")
+                            customImage.push()
+                        }
+                    }
+                }
+            }
+        }
+
+    //   stage('Twistlock Scan & Publish') {
+    //         when {
+    //             expression {
+    //                 return ((env.BRANCH_NAME.startsWith('PR-') && env.CHANGE_BRANCH.startsWith('feature-') && env.CHANGE_TARGET.startsWith('develop')) || env.BRANCH_NAME.startsWith('feature-') || env.BRANCH_NAME == 'develop')
+    //             }
+    //         }
+    //         stages {
+    //             stage('Twistlock Scan') {
+    //                 steps {
+    //                     twistlockScan ca: '',
+    //                         cert: '',
+    //                         policy: 'warn',
+    //                         compliancePolicy: 'critical',
+    //                         containerized: true,
+    //                         dockerAddress: 'unix:///var/run/docker.sock',
+    //                         gracePeriodDays: 0,
+    //                         ignoreImageBuildTime: true,
+    //                         key: '',
+    //                         logLevel: 'true',
+    //                         requirePackageUpdate: false,
+    //                         timeout: 10,
+    //                         repository: '${DOCKER_REGISTRY}',
+    //                         tag: '${APP_VERSION}',
+    //                         image: env.BRANCH_NAME == 'develop' ? '${env.BUILD}/${APPLICATION_BUILD_NAME}:${APP_VERSION}':'${env.FEATURE}/${APPLICATION_BUILD_NAME}:${APP_VERSION}' // Identify the namespace where the image was pushed to based on the commit branch.
+    //                     }
+    //                }
+
+    //                stage('Twistlock Publish') {
+    //                     steps {
+    //                         twistlockPublish ca: '',
+    //                             cert: '',
+    //                             dockerAddress: 'unix:///var/run/docker.sock',
+    //                             ignoreImageBuildTime: true,
+    //                             repository: '${DOCKER_REGISTRY}',
+    //                             tag: '${APP_VERSION}',
+    //                             image: env.BRANCH_NAME == 'develop' ? '${env.BUILD}/${APPLICATION_BUILD_NAME}:${APP_VERSION}':'${env.FEATURE}/${APPLICATION_BUILD_NAME}:${APP_VERSION}', // Identify the namespace where the image was pushed to based on the commit branch.
+    //                             key: '',
+    //                             logLevel: 'true',
+    //                             timeout: 10
+    //                     }
+    //                }
+    //           }
+    //     }
+
+        stage('Promote from Build to Dev') {
+            // environment {
+            //     GIT_CREDS = credentials('git')
+            // }
+            // steps {
+            //     container('tools') {
+            //         sh "git clone https://$GIT_CREDS_USR:$GIT_CREDS_PSW@github.com/diego-ruiz-rei/test-app-deploy.git"
+            //         sh "git config --global user.email 'ci@ci.com'"
+
+            //         dir("test-app-deploy") {
+            //             sh "cd ./base && kustomize edit set image diegoruizrei/infra-test:${env.GIT_COMMIT}"
+            //             sh "git commit -am 'Publish new version' && git push || echo 'no changes'"
+            //         }
+            //     }
+            // }
+        }
+
+    
+    }
+}
+
+// Report back to github: Status Check to enable or disable the PR for merge
+def notifyGithubStatusCheck(String status = 'SUCCESS', String description) {
+  if (env.BRANCH_NAME.startsWith('PR-') && env.CHANGE_BRANCH.startsWith('feature-') && env.CHANGE_TARGET.startsWith('develop')) {
+    // https://jenkins.io/doc/pipeline/steps/pipeline-githubnotify-step/
+    // https://developer.github.com/v3/repos/statuses/
+    // Report back to github: Status Check to enable the PR for merge
+    githubNotify description: description,  status: status, context: 'continuous-integration/jenkins/pr-head'
+  }
+}

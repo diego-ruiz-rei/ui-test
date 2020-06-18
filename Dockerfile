@@ -29,7 +29,7 @@ COPY package.json .
 FROM base AS dependencies
 RUN npm install
 
-
+COPY . /usr/src/app
 
 #FROM base AS release
 #COPY --from=dependencies /usr/src/app/node_modules ./node_modules

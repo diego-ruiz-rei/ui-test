@@ -244,7 +244,7 @@ spec:
                     sh "git config --global user.email 'ci@ci.com'"
 
                     dir("ui-test-deploy") {
-                        sh "cd ./base && kustomize edit set image diegoruizrei/infra-test:${env.GIT_COMMIT}"
+                        sh "cd ./base && kustomize edit set image diegoruizrei/infra-ui-test:${env.GIT_COMMIT}"
                         sh "git commit -am 'Publish new version' && git push || echo 'no changes'"
                     }
                 }

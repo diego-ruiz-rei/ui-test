@@ -30,13 +30,15 @@ FROM base AS dependencies
 RUN npm install
 
 
+
+#FROM base AS release
+#COPY --from=dependencies /usr/src/app/node_modules ./node_modules
+RUN npm run prod
+
 #
 # ---- Release ----
 FROM base AS release
-COPY --from=dependencies /usr/src/app/node_modules ./node_modules
-RUN npm run prod
-RUN mkdir -p /usr/src/app/oc_build
-RUN cp -rfv dist oc-build/ 2> /dev/null
+COPY --from=dependencies /usr/src/app/dist ./dist
 
 #copy configured nginx file
 COPY nginx/ /etc/nginx/conf.d
@@ -45,7 +47,7 @@ COPY nginx/ /etc/nginx/conf.d
 # Add config/update-build-env.js to substitute the environment variables in `main-**.js` files
 # ADD config ./config
 # Add package.json for command line used in CMD
-ADD package.json ./
+# ADD package.json ./
 
 # Drop the root user and make the content of these path owned by user 1001
 RUN chown -R 1001:1001 /usr/src/app/dist

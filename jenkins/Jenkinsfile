@@ -73,7 +73,7 @@ spec:
     // Pipeline Stages start here
     // Requeres at least one stage
     stages {
-        stage('Build, Tests'){
+        stage('Build Image, Run Tests'){
             steps{
                 container('node'){
                     container('docker'){
@@ -164,7 +164,7 @@ spec:
         // }
 
         // Build Container Image using the artifacts produced in previous stages
-        stage('Build Image') {
+        stage('Push Image') {
             steps {
                 container('docker'){
                     script {

@@ -10,6 +10,7 @@ library identifier: "pipeline-library@master",
         )
 
 // Define variables for the pipeline usage
+def customImage
 def sonarLogin, sonarPassword
 def DOCKERFILE_PATH, APPLICATION_BUILD_NAME, DOCKER_REGISTRY, SONARQUBE_SECRET, SONARQUBE_URL, APP_VERSION, HOSTNAME_SUFFIX, SELENIUM_HUB, APPLICATION_URL_DEV
 //def clusterUrl = openshift.cluster();
@@ -72,28 +73,19 @@ spec:
     // Pipeline Stages start here
     // Requeres at least one stage
     stages {
-        // Checkout source code
-        // This is required as Pipeline code is originally checkedout to
-        // Jenkins Master but this will also pull this same code to this slave
-        stage('Install Dev Modules') {
-            steps {
-                script {
-                    container('node') {
-                        //notifySlack('STARTED', 'Job started!')
-
-                        // Report back to github: Status Check PENDING
-                        //notifyGithubStatusCheck('PENDING', 'Continuous integration started!')
-
-                        // Report back to github: Status Check PENDING
-                        //notifyGithubStatusCheck('PENDING', 'Continuous integration: Build the App!')
-
-                        //sh 'npm config set registry https://nexus-cis-ap-build.apps.scomet.reidevops.net/repository/npm/'
-                        sh 'npm install'
+        state('Build, Tests'){
+            steps{
+                container('node'){
+                    container('docker'){
+                        script {
+                            docker.withRegistry('', 'dockerhub') {
+                                customImage = docker.build("diegoruizrei/infra-ui-test:${env.GIT_COMMIT}", "--network=host .")
+                            }
+                        }
                     }
                 }
             }
         }
-
         // Run Maven unit tests
         // stage('Unit Test') {
         //     when {
@@ -166,23 +158,9 @@ spec:
         // Build Container Image using the artifacts produced in previous stages
         stage('Build Image') {
             steps {
-                container('node'){
-                    script {
-                        sh """
-                            npm run prod
-                            rm -rf oc-build && mkdir -p oc-build
-                            cp -rfv dist oc-build/ 2> /dev/null
-                            cp Dockerfile oc-build/
-                            cp package.json oc-build/
-                            cp -rfv nginx oc-build/
-                            ls -lsa oc-build/
-                        """
-                    }
-                }
                 container('docker'){
                     script {
                         docker.withRegistry('', 'dockerhub') {
-                            def customImage = docker.build("diegoruizrei/infra-ui-test:${env.GIT_COMMIT}", "--network=host ./oc-build")
                             customImage.push()
                         }
                     }

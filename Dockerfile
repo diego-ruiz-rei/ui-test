@@ -1,4 +1,6 @@
-FROM node:10-alpine
+#
+# ---- Base Node ----
+FROM node:10-alpine AS base
 RUN sed -i -e 's/v3\.9/v3.10/g' /etc/apk/repositories
 RUN apk update
 RUN apk add --upgrade busybox
@@ -14,17 +16,32 @@ RUN sed -i -e 's/keepalive\_timeout 65/keepalive_timeout 300/g' /etc/nginx/nginx
 
 # Delete default nginx config file & index file
 RUN rm /etc/nginx/conf.d/default.conf
-#RUN rm /var/www/html/index.nginx-debian.html
-
-#copy configured nginx file
-COPY nginx/ /etc/nginx/conf.d
 
 # Create app directory
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
-# Add the generated "dist" folder in jenkins pipeline
-ADD dist ./dist
+#RUN rm /var/www/html/index.nginx-debian.html
+COPY package.json .
+
+#
+# ---- Dependencies ----
+FROM base AS dependencies
+RUN npm install
+
+
+#
+# ---- Release ----
+FROM base AS release
+#COPY --from=dependencies /usr/src/app/node_modules ./node_modules
+RUN npm run prod
+RUN mkdir -p /usr/src/app/oc_build
+RUN cp -rfv dist oc-build/ 2> /dev/null
+
+#copy configured nginx file
+COPY nginx/ /etc/nginx/conf.d
+
+
 # Add config/update-build-env.js to substitute the environment variables in `main-**.js` files
 # ADD config ./config
 # Add package.json for command line used in CMD

@@ -62,7 +62,7 @@ RUN npm run prod
 
 #
 # ---- Release ----
-FROM base AS release
+FROM build AS release
 COPY --from=dependencies /usr/src/app/dist ./dist
 
 #copy configured nginx file

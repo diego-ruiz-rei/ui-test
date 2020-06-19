@@ -55,7 +55,6 @@ WORKDIR /usr/src/app
 COPY --from=dependencies /usr/src/app/node_modules ./node_modules
 COPY --from=dependencies /usr/src/app/angular.json /usr/src/app/package.json /usr/src/app/tsconfig.json /usr/src/app/tsconfig.spec.json /usr/src/app/karma-headless.conf.js ./
 COPY ./src ./src
-RUN ls
 RUN npm run test:ci-headless
 
 #

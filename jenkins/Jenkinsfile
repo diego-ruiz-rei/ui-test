@@ -87,8 +87,11 @@ spec:
                             script {
                                 docker.withRegistry('', 'dockerhub') {
                                     customImage = docker.build("diegoruizrei/infra-ui-test:${env.GIT_COMMIT}", "--network=host .")
-                                    sh "export image_id=$(docker create diegoruizrei/infra-ui-test:${env.GIT_COMMIT})"
-                                    sh "docker cp $image_id:/usr/src/app/reports ./reports"
+                                    sh """
+                                    GITCOMMIT=${env.GIT_COMMIT}
+                                    image_id=$(docker create diegoruizrei/infra-ui-test:$GITCOMMIT)
+                                    docker cp $image_id:/usr/src/app/reports ./reports
+                                    """
                                     sh "ls ./"
                                     sh "ls ./reports"
                                 }

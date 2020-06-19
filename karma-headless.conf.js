@@ -49,8 +49,12 @@ module.exports = function(config) {
         base: 'Chrome',
         flags: [
           '--headless',
-          '--disable-gpu',
+          // Required for Docker version of Puppeteer
           '--no-sandbox',
+          '--disable-setuid-sandbox',
+          // This will write shared memory files into /tmp instead of /dev/shm,
+          // because Docker’s default for /dev/shm is 64MB
+          '--disable-dev-shm-usage',
           // Without a remote debugging port, Google Chrome exits immediately.
           '--remote-debugging-port=9222'
         ],

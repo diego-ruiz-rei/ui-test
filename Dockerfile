@@ -27,30 +27,37 @@ COPY package.json .
 #
 # ---- Dependencies ----
 FROM base AS dependencies
-# puppeteer
-RUN apk add --no-cache \
-      chromium \
-      nss \
-      freetype \
-      freetype-dev \
-      harfbuzz \
-      ca-certificates \
-      ttf-freefont
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 RUN npm install
 
-COPY . /usr/src/app
+#COPY . /usr/src/app
+COPY ./angular.json ./package.json ./tsconfig.json ./tsconfig.app.json ./tsconfig.spec.json ./karma.conf.js ./karma-headless.conf.js ./
+COPY ./src ./src
 RUN node -v
 
 #
 # ---- Test ----
-FROM dependencies AS tests
-RUN addgroup -S pptruser && adduser -S -g pptruser pptruser \
-    && mkdir -p /home/pptruser/Downloads /app \
-    && chown -R pptruser:pptruser /home/pptruser \
-    && chown -R pptruser:pptruser /usr/src/app
-USER pptruser
+FROM node:12.18.0-buster-slim@sha256:97da8d5023fd0380ed923d13f83041dd60b0744e4d140f6276c93096e85d0899 as tests
+    
+RUN  apt-get update \
+     && apt-get install -y wget gnupg ca-certificates \
+     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+     && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+     && apt-get update \
+     # We install Chrome to get all the OS level dependencies, but Chrome itself
+     # is not actually used as it's packaged in the node puppeteer library.
+     # Alternatively, we could could include the entire dep list ourselves
+     # (https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md#chrome-headless-doesnt-launch-on-unix)
+     # but that seems too easy to get out of date.
+     && apt-get install -y google-chrome-stable \
+     && rm -rf /var/lib/apt/lists/* \
+     && wget --quiet https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh -O /usr/sbin/wait-for-it.sh \
+     && chmod +x /usr/sbin/wait-for-it.sh
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+COPY --from=dependencies /usr/src/app/angular.json /usr/src/app/package.json /usr/src/app/tsconfig.json /usr/src/app/tsconfig.spec.json /usr/src/app/karma-headless.conf.js ./
+COPY --from=dependencies /usr/src/app/src ./src
+COPY --from=dependencies /usr/src/app/node_modules ./node_modules
+RUN ls
 RUN npm run test:ci-headless
 
 #

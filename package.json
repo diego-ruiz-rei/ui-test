@@ -7,7 +7,7 @@
     "build": "ng build",
     "test": "ng test --code-coverage=true",
     "test:headless": "ng test --code-coverage=true --watch=false --karma-config=./karma-headless.conf.js",
-    "test:ci-headless": "ng test --code-coverage=true --watch=false --karma-config=./karma-headless-ci.conf.js",
+    "test:ci-headless": "npm run-script ng -- test --code-coverage=true --watch=false --karma-config=./karma-headless.conf.js",
     "lint": "ng lint",
     "prod": "ng build --prod --base-href / --configuration=production",
     "server:prod": "nginx -g 'daemon off;'",
@@ -50,6 +50,6 @@
     "ts-node": "~7.0.0",
     "tslint": "~5.15.0",
     "typescript": "~3.4.3",
-    "puppeteer": "1.16.0"
+    "puppeteer": "3.3.0"
   }
 }

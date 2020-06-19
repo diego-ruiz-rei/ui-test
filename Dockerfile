@@ -21,21 +21,19 @@ RUN rm /etc/nginx/conf.d/default.conf
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
-#RUN rm /var/www/html/index.nginx-debian.html
 COPY package.json .
 
 #
 # ---- Dependencies ----
 FROM base AS dependencies
 RUN npm install
-
-#COPY . /usr/src/app
 COPY ./angular.json ./package.json ./tsconfig.json ./tsconfig.app.json ./tsconfig.spec.json ./karma.conf.js ./karma-headless.conf.js ./
 COPY ./src ./src
 RUN node -v
 
 #
 # ---- Test ----
+# pulled from https://github.com/buildkite/docker-puppeteer/blob/master/Dockerfile
 FROM node:12.18.0-buster-slim@sha256:97da8d5023fd0380ed923d13f83041dd60b0744e4d140f6276c93096e85d0899 as tests
     
 RUN  apt-get update \
@@ -63,7 +61,6 @@ RUN npm run test:ci-headless
 #
 # ---- Build ----
 FROM dependencies AS build
-#COPY --from=dependencies /usr/src/app/node_modules ./node_modules
 RUN npm run prod
 
 #
@@ -74,18 +71,11 @@ COPY --from=build /usr/src/app/dist ./dist
 #copy configured nginx file
 COPY nginx/ /etc/nginx/conf.d
 
-
-# Add config/update-build-env.js to substitute the environment variables in `main-**.js` files
-# ADD config ./config
-# Add package.json for command line used in CMD
-# ADD package.json ./
-
 # Drop the root user and make the content of these path owned by user 1001
 RUN chown -R 1001:1001 /usr/src/app/dist
 RUN chown -R 1001:1001 /var/log/nginx
 RUN chown -R 1001:1001 /var/lib/nginx
-#RUN chown -R 1001:1001 /var/tmp/nginx # Exist only on alpine images
-#RUN chown -R 1001:1001 /usr/share/nginx #doesn't exist in alpine
+
 # Solve nginx start to create `nginx.pid` in /run
 RUN mkdir -p /run/nginx
 RUN chown -R 1001:1001 /run
@@ -97,8 +87,5 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log \
 USER 1001
 
 EXPOSE 8080
-
-# Build the static application during runtime to pick up env variables
-#CMD npm run build:${UI_ENVIRONMENT} && npm run start:${UI_ENVIRONMENT}
 
 CMD npm run server:prod

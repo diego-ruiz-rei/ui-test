@@ -91,7 +91,7 @@ spec:
                                 }
                                 sh """
                                 export image_id=\$(docker create diegoruizrei/infra-ui-test:${env.GIT_COMMIT})
-                                docker cp $image_id:/usr/src/app/reports ./reports
+                                docker cp \$image_id:/usr/src/app/reports ./reports
                                 """
                                 sh "ls ./"
                                 sh "ls ./reports"

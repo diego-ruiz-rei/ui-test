@@ -144,13 +144,13 @@ spec:
                         // Run Sonar in this block would result into authorization issue. As the ${user} and ${pass} are encrypted ***** **** instead of plan values
                     }
 
-                    //withSonarQubeEnv('SonarQube') {
+                    withSonarQubeEnv('SonarQube') {
                         // Create a new SonarQube analysis and dashboard for this new/updated feature branch / app
                         //def additionalParams =  (env.BRANCH_NAME.startsWith('feature-')) ? " -Dsonar.projectKey=${APPLICATION_BUILD_NAME} -Dsonar.projectName=${APPLICATION_BUILD_NAME} -Dsonar.projectVersion=${env.GIT_COMMIT.substring(0, 6)}" : ""
 
                         // Run Sonar in this block to ensure user/pass are not encrypted
                         sh "sonar-scanner -Dsonar.host.url=http://sonarqube-sonarqube:9000 -Dsonar.login=${sonarLogin} -Dsonar.password=${sonarPassword}"// ${additionalParams}"
-                    //}
+                    }
 
                     // try again when JENKINS route has SSL valid: https://stackoverflow.com/questions/45693418/sonarqube-quality-gate-not-sending-webhook-to-jenkins
                     // sleep(10)

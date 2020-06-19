@@ -89,7 +89,7 @@ spec:
                                     customImage = docker.build("diegoruizrei/infra-ui-test:${env.GIT_COMMIT}", "--network=host .")
                                     sh """
                                     export image_id=$(docker create diegoruizrei/infra-ui-test:${env.GIT_COMMIT})
-                                    docker cp ${image_id}:/usr/src/app/reports ./reports
+                                    docker cp $image_id:/usr/src/app/reports ./reports
                                     ls ./
                                     ls ./reports
                                     """

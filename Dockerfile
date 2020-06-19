@@ -51,7 +51,7 @@ RUN addgroup -S pptruser && adduser -S -g pptruser pptruser \
     && chown -R pptruser:pptruser /home/pptruser \
     && chown -R pptruser:pptruser /usr/src/app
 USER pptruser
-RUN npm run test:headless
+RUN npm run test:ci-headless
 
 #
 # ---- Build ----

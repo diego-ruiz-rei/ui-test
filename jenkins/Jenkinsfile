@@ -18,6 +18,7 @@ def DOCKERFILE_PATH, APPLICATION_BUILD_NAME, DOCKER_REGISTRY, SONARQUBE_SECRET, 
 
 pipeline {
     agent {
+        podRetention onFailure()
         kubernetes {
       yaml """
 apiVersion: v1

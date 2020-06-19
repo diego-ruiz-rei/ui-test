@@ -58,6 +58,11 @@ spec:
   #  command:
   #  - cat
   #  tty: true
+  - name: sonar
+    image: sonarsource/sonar-scanner-cli:latest
+    command:
+    - cat
+    tty: true
   volumes:
   # use host docker
   - name: docker-sock
@@ -144,7 +149,7 @@ spec:
                         // Run Sonar in this block would result into authorization issue. As the ${user} and ${pass} are encrypted ***** **** instead of plan values
                     }
 
-                    withSonarQubeEnv('SonarQube') {
+                    container('sonar'){
                         // Create a new SonarQube analysis and dashboard for this new/updated feature branch / app
                         //def additionalParams =  (env.BRANCH_NAME.startsWith('feature-')) ? " -Dsonar.projectKey=${APPLICATION_BUILD_NAME} -Dsonar.projectName=${APPLICATION_BUILD_NAME} -Dsonar.projectVersion=${env.GIT_COMMIT.substring(0, 6)}" : ""
 

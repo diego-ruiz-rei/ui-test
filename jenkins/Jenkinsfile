@@ -93,11 +93,22 @@ spec:
                                 export image_id=\$(docker create diegoruizrei/infra-ui-test:${env.GIT_COMMIT})
                                 docker cp \$image_id:/usr/src/app/reports ./reports
                                 """
-                                sh "ls ./"
-                                sh "ls ./reports"
                             }
                         //}
                     }
+                }
+            }
+            post {
+                always {
+                    // publish  report
+                    publishHTML(target: [
+                      reportDir            : "./reports/coverage",
+                      reportFiles          : 'index.html',
+                      reportName           : 'Istanbul Report (Code Coverage)',
+                      keepAll              : true,
+                      alwaysLinkToLastBuild: true,
+                      allowMissing         : false
+                    ])
                 }
             }
         }
@@ -114,61 +125,48 @@ spec:
 
         //         sh 'CI=true npm run test:headless'
         //     }
-        //     post {
-        //         always {
-        //             // publish  report
-        //             publishHTML(target: [
-        //               reportDir            : "./reports/coverage",
-        //               reportFiles          : 'index.html',
-        //               reportName           : 'Istanbul Report (Code Coverage)',
-        //               keepAll              : true,
-        //               alwaysLinkToLastBuild: true,
-        //               allowMissing         : false
-        //             ])
-        //         }
-        //     }
         // }
 
-        // stage('SonarQube Code Analysis') {
-        //     when {
-        //         expression {
-        //             return ((env.BRANCH_NAME.startsWith('PR-') && env.CHANGE_BRANCH.startsWith('feature-') && env.CHANGE_TARGET.startsWith('develop')) || env.BRANCH_NAME.startsWith('feature-') || env.BRANCH_NAME == 'develop')
-        //         }
-        //     }
-        //     steps {
-        //         // Report back to github: Status Check PENDING
-        //         notifyGithubStatusCheck('PENDING', 'Continuous integration: Run code analysis!')
+        stage('SonarQube Code Analysis') {
+            // when {
+            //     expression {
+            //         return ((env.BRANCH_NAME.startsWith('PR-') && env.CHANGE_BRANCH.startsWith('feature-') && env.CHANGE_TARGET.startsWith('develop')) || env.BRANCH_NAME.startsWith('feature-') || env.BRANCH_NAME == 'develop')
+            //     }
+            // }
+            steps {
+                // Report back to github: Status Check PENDING
+                //notifyGithubStatusCheck('PENDING', 'Continuous integration: Run code analysis!')
 
-        //         script {
-        //             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "${env.NAMESPACE}-${SONARQUBE_SECRET}", passwordVariable: 'pass', usernameVariable: 'user']]) {
-        //                 sonarLogin = '${user}'
-        //                 sonarPassword = '${pass}'
-        //                 // Run Sonar in this block would result into authorization issue. As the ${user} and ${pass} are encrypted ***** **** instead of plan values
-        //             }
+                script {
+                    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "sonar", passwordVariable: 'pass', usernameVariable: 'user']]) {
+                        sonarLogin = '${user}'
+                        sonarPassword = '${pass}'
+                        // Run Sonar in this block would result into authorization issue. As the ${user} and ${pass} are encrypted ***** **** instead of plan values
+                    }
 
-        //             withSonarQubeEnv('SonarQube') {
-        //                 // Create a new SonarQube analysis and dashboard for this new/updated feature branch / app
-        //                 def additionalParams =  (env.BRANCH_NAME.startsWith('feature-')) ? " -Dsonar.projectKey=${APPLICATION_BUILD_NAME} -Dsonar.projectName=${APPLICATION_BUILD_NAME} -Dsonar.projectVersion=${env.GIT_COMMIT.substring(0, 6)}" : ""
+                    //withSonarQubeEnv('SonarQube') {
+                        // Create a new SonarQube analysis and dashboard for this new/updated feature branch / app
+                        //def additionalParams =  (env.BRANCH_NAME.startsWith('feature-')) ? " -Dsonar.projectKey=${APPLICATION_BUILD_NAME} -Dsonar.projectName=${APPLICATION_BUILD_NAME} -Dsonar.projectVersion=${env.GIT_COMMIT.substring(0, 6)}" : ""
 
-        //                 // Run Sonar in this block to ensure user/pass are not encrypted
-        //                 sh "sonar-scanner -Dsonar.host.url=${SONARQUBE_URL} -Dsonar.login=${sonarLogin} -Dsonar.password=${sonarPassword} ${additionalParams}"
-        //             }
+                        // Run Sonar in this block to ensure user/pass are not encrypted
+                        sh "sonar-scanner -Dsonar.host.url=http://sonarqube-sonarqube:9000 -Dsonar.login=${sonarLogin} -Dsonar.password=${sonarPassword}"// ${additionalParams}"
+                    //}
 
-        //             // try again when JENKINS route has SSL valid: https://stackoverflow.com/questions/45693418/sonarqube-quality-gate-not-sending-webhook-to-jenkins
-        //             // sleep(10)
-        //             timeout(time: 5, unit: 'MINUTES') { // Just in case something goes wrong, pipeline will be killed after a timeout
-        //                 def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
-        //                 echo "Pipeline quality gate status: ${qg.status}"
-        //                 if (qg.status == 'ERROR') {
-        //                     echo "Pipeline aborted due to quality gate failure: ${qg.status}"
-        //                     // TODO: swap the comment out the 2 lines below to mark the build as failed when quality gate failed
-        //                     input message: 'SQ Quality Gate Failed, continue?'
-        //                     //error "Pipeline aborted due to quality gate failure: ${qg.status}"
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+                    // try again when JENKINS route has SSL valid: https://stackoverflow.com/questions/45693418/sonarqube-quality-gate-not-sending-webhook-to-jenkins
+                    // sleep(10)
+                    // timeout(time: 5, unit: 'MINUTES') { // Just in case something goes wrong, pipeline will be killed after a timeout
+                    //     def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
+                    //     echo "Pipeline quality gate status: ${qg.status}"
+                    //     if (qg.status == 'ERROR') {
+                    //         echo "Pipeline aborted due to quality gate failure: ${qg.status}"
+                    //         // TODO: swap the comment out the 2 lines below to mark the build as failed when quality gate failed
+                    //         input message: 'SQ Quality Gate Failed, continue?'
+                    //         //error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                    //     }
+                    // }
+                }
+            }
+        }
 
         // Build Container Image using the artifacts produced in previous stages
         stage('Push Image') {

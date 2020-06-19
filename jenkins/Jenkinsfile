@@ -19,15 +19,16 @@ def DOCKERFILE_PATH, APPLICATION_BUILD_NAME, DOCKER_REGISTRY, SONARQUBE_SECRET, 
 pipeline {
     agent {
         kubernetes {
+      podRetention always()
       yaml """
 apiVersion: v1
 kind: Pod
 metadata:
   labels:
-    some-label: maven-build
+    some-label: node-build
 spec:
   containers:
-  # used to run maven processes
+  # used to run node processes
   - name: node
     image: node:latest
     command:

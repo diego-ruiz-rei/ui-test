@@ -99,6 +99,7 @@ spec:
                                 export image_id=\$(docker create diegoruizrei/infra-ui-test:${env.GIT_COMMIT})
                                 docker cp \$image_id:/usr/src/app/reports ./reports
                                 grep -rl '/usr/src/app/' ./reports | xargs sed -i 's/\\/usr\\/src\\/app/\\/home\\/jenkins\\/agent\\/workspace\\/demo-ui/g'
+                                head 20 ./reports/coverage/ui-test/lcov.info
                                 """
                             }
                         //}

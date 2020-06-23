@@ -98,9 +98,10 @@ spec:
                                 sh """
                                 export image_id=\$(docker create diegoruizrei/infra-ui-test:${env.GIT_COMMIT})
                                 docker cp \$image_id:/usr/src/app/reports ./reports
-                                grep -rl '/usr/src/app/' ./reports | xargs sed -i 's/\\/usr\\/src\\/app/\\/home\\/jenkins\\/agent\\/workspace\\/ui-demo/g'
-                                head 20 ./reports/coverage/ui-test/lcov.info
+                                
                                 """
+                                //grep -rl '/usr/src/app/' ./reports | xargs sed -i 's/\\/usr\\/src\\/app/\\/home\\/jenkins\\/agent\\/workspace\\/ui-demo/g'
+                                //head 20 ./reports/coverage/ui-test/lcov.info
                             }
                         //}
                     }
@@ -155,7 +156,7 @@ spec:
                             //def additionalParams =  (env.BRANCH_NAME.startsWith('feature-')) ? " -Dsonar.projectKey=${APPLICATION_BUILD_NAME} -Dsonar.projectName=${APPLICATION_BUILD_NAME} -Dsonar.projectVersion=${env.GIT_COMMIT.substring(0, 6)}" : ""
 
                             // Run Sonar in this block to ensure user/pass are not encrypted
-                            sh "sonar-scanner -Dsonar.host.url=http://sonarqube-sonarqube:9000 -Dsonar.login=${user} -Dsonar.password=${pass}"// ${additionalParams}"
+                            //sh "sonar-scanner -Dsonar.host.url=http://sonarqube-sonarqube:9000 -Dsonar.login=${user} -Dsonar.password=${pass}"// ${additionalParams}"
                         }
                     }
 

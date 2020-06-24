@@ -93,6 +93,7 @@ spec:
             steps {
                 container('node'){
                     sh 'ls /root/npmcache'
+                    sh 'PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true'
                     sh 'npm install --cache=/root/npmcache'
                 }
             }

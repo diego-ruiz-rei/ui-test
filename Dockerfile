@@ -27,7 +27,7 @@ COPY package.json .
 # ---- Dependencies ----
 FROM base AS dependencies
 RUN npm install
-COPY ./angular.json ./package.json ./tsconfig.json ./tsconfig.app.json ./tsconfig.spec.json ./karma.conf.js ./karma-headless.conf.js ./
+COPY ./angular.json ./package.json ./tsconfig.json ./tsconfig.app.json ./tsconfig.spec.json ./karma.conf.js ./karma-headless.conf.js sonar-project.properties tslint.json ./
 COPY ./src ./src
 RUN node -v
 
@@ -53,9 +53,19 @@ RUN  apt-get update \
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 COPY --from=dependencies /usr/src/app/node_modules ./node_modules
-COPY --from=dependencies /usr/src/app/angular.json /usr/src/app/package.json /usr/src/app/tsconfig.json /usr/src/app/tsconfig.spec.json /usr/src/app/karma-headless.conf.js ./
+COPY --from=dependencies /usr/src/app/angular.json /usr/src/app/package.json /usr/src/app/tsconfig.json /usr/src/app/tsconfig.spec.json /usr/src/app/karma-headless.conf.js /usr/src/app/tslint.json ./
 COPY ./src ./src
 RUN npm run test:ci-headless
+
+#
+# ---- Sonar ----
+# sonar needs both java and nodejs
+FROM timbru31/java-node as ui-sonar
+COPY --from=dependencies /usr/src/app/node_modules ./node_modules
+COPY --from=tests /usr/src/app/reports ./reports
+COPY --from=dependencies /usr/src/app/src ./src
+COPY --from=dependencies /usr/src/app/angular.json /usr/src/app/package.json /usr/src/app/tsconfig.json /usr/src/app/tsconfig.spec.json /usr/src/app/karma-headless.conf.js /usr/src/app/sonar-project.properties /usr/src/app/tslint.json ./
+RUN npm run sonar -- -Dsonar.host.url=http://sonar.drtest.reisys.io -Dsonar.login=admin -Dsonar.password=admin
 
 #
 # ---- Build ----

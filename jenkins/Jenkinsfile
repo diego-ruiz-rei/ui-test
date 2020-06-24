@@ -73,7 +73,6 @@ spec:
     hostPath:
       path: /root/npmcache
 """
-        workspaceVolume dynamicPVC()
         }
     }
 
@@ -91,7 +90,7 @@ spec:
                     //sh 'ls node_modules'
                     sh 'ls /root/npmcache'
                     sh 'export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true'
-                    sh 'npm install --cache=/root/npmcache'
+                    sh 'npm install --prefer-offline --cache=/root/npmcache'
                 }
             }
         }

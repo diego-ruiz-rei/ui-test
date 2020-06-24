@@ -37,6 +37,7 @@ spec:
     - mountPath: /root/npmcache
       name: node-slave-pvc2
       readOnly: false
+  # used for unit tests
   - name: puppeteer
     image: buildkite/puppeteer:latest
     command:
@@ -57,12 +58,6 @@ spec:
     command:
     - cat
     tty: true
-  # needed to run tests
-  #- name: chrome-headless
-  #  image: justinribeiro/chrome-headless:latest
-  #  command:
-  #  - cat
-  #  tty: true
   - name: sonar
     image: sonarsource/sonar-scanner-cli:latest
     command:
@@ -146,21 +141,6 @@ spec:
                             sh "sonar-scanner -Dsonar.host.url=http://sonarqube-sonarqube:9000 -Dsonar.login=${user} -Dsonar.password=${pass}"// ${additionalParams}"
                         }
                     }
-
-                    
-
-                    // try again when JENKINS route has SSL valid: https://stackoverflow.com/questions/45693418/sonarqube-quality-gate-not-sending-webhook-to-jenkins
-                    // sleep(10)
-                    // timeout(time: 5, unit: 'MINUTES') { // Just in case something goes wrong, pipeline will be killed after a timeout
-                    //     def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
-                    //     echo "Pipeline quality gate status: ${qg.status}"
-                    //     if (qg.status == 'ERROR') {
-                    //         echo "Pipeline aborted due to quality gate failure: ${qg.status}"
-                    //         // TODO: swap the comment out the 2 lines below to mark the build as failed when quality gate failed
-                    //         input message: 'SQ Quality Gate Failed, continue?'
-                    //         //error "Pipeline aborted due to quality gate failure: ${qg.status}"
-                    //     }
-                    // }
                 }
             }
         }
@@ -172,27 +152,30 @@ spec:
                         script {
                             docker.withRegistry('', 'dockerhub') {
                                 customImage = docker.build("diegoruizrei/infra-ui-test:${env.GIT_COMMIT}", "--network=host .")
-                                
+                                customImage.push()
                             }
                         }
                     }
                 }
             }
         }
-
-        // Build Container Image using the artifacts produced in previous stages
-        stage('Push Image') {
+        
+        stage('Promote from Build to Dev') {
+            environment {
+                GIT_CREDS = credentials('git')
+            }
             steps {
-                container('docker'){
-                    script {
-                        docker.withRegistry('', 'dockerhub') {
-                            customImage.push()
-                        }
+                container('tools') {
+                    sh "git clone https://$GIT_CREDS_USR:$GIT_CREDS_PSW@github.com/diego-ruiz-rei/ui-test-deploy.git"
+                    sh "git config --global user.email 'ci@ci.com'"
+
+                    dir("ui-test-deploy") {
+                        sh "cd ./base && kustomize edit set image diegoruizrei/infra-ui-test:${env.GIT_COMMIT}"
+                        sh "git commit -am 'Publish new version' && git push || echo 'no changes'"
                     }
                 }
             }
         }
-
     //   stage('Twistlock Scan & Publish') {
     //         when {
     //             expression {
@@ -236,25 +219,6 @@ spec:
     //                }
     //           }
     //     }
-
-        stage('Promote from Build to Dev') {
-            environment {
-                GIT_CREDS = credentials('git')
-            }
-            steps {
-                container('tools') {
-                    sh "git clone https://$GIT_CREDS_USR:$GIT_CREDS_PSW@github.com/diego-ruiz-rei/ui-test-deploy.git"
-                    sh "git config --global user.email 'ci@ci.com'"
-
-                    dir("ui-test-deploy") {
-                        sh "cd ./base && kustomize edit set image diegoruizrei/infra-ui-test:${env.GIT_COMMIT}"
-                        sh "git commit -am 'Publish new version' && git push || echo 'no changes'"
-                    }
-                }
-            }
-        }
-
-    
     }
 }
 

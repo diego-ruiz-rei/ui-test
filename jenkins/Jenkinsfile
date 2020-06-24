@@ -15,7 +15,7 @@ def sonarLogin, sonarPassword
 def DOCKERFILE_PATH, APPLICATION_BUILD_NAME, DOCKER_REGISTRY, SONARQUBE_SECRET, SONARQUBE_URL, APP_VERSION, HOSTNAME_SUFFIX, SELENIUM_HUB, APPLICATION_URL_DEV
 //def clusterUrl = openshift.cluster();
 //echo "Now using cluster with url ${clusterUrl}"
-def workspace = pwd()
+
 pipeline {
     agent {
         kubernetes {
@@ -36,9 +36,6 @@ spec:
     volumeMounts:
     - mountPath: /root/npmcache
       name: node-slave-pvc2
-      readOnly: false
-    - mountPath: ${workspace}/node_modules
-      name: node-slave-pvc3
       readOnly: false
   # used for unit tests
   - name: puppeteer
@@ -75,10 +72,8 @@ spec:
   - name: node-slave-pvc2
     hostPath:
       path: /root/npmcache
-  - name: node-slave-pvc3
-    hostPath:
-      path: /root/ui-test/node_modules
 """
+        workspaceVolume persistentVolumeClaimWorkspaceVolume(claimName: 'ui-demo-workspace', readOnly: false)
         }
     }
 

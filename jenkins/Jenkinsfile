@@ -37,6 +37,9 @@ spec:
     - mountPath: /root/npmcache
       name: node-slave-pvc2
       readOnly: false
+    - mountPath: ${env.WORKSPACE}/node_modules
+      name: node-slave-pvc3
+      readOnly: false
   # used for unit tests
   - name: puppeteer
     image: buildkite/puppeteer:latest
@@ -72,6 +75,9 @@ spec:
   - name: node-slave-pvc2
     hostPath:
       path: /root/npmcache
+  - name: node-slave-pvc3
+    hostPath:
+      path: /root/ui-test/node_modules
 """
         }
     }
@@ -87,6 +93,7 @@ spec:
         stage('install dependencies') {
             steps {
                 container('node'){
+                    sh 'ls node_modules'
                     sh 'ls /root/npmcache'
                     sh 'export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true'
                     sh 'npm install --cache=/root/npmcache'

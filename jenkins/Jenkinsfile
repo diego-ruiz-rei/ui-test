@@ -37,7 +37,7 @@ spec:
     - mountPath: /root/npmcache
       name: node-slave-pvc2
       readOnly: false
-    - mountPath: ${env.WORKSPACE}/node_modules
+    - mountPath: ${PWD}/node_modules
       name: node-slave-pvc3
       readOnly: false
   # used for unit tests

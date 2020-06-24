@@ -42,8 +42,6 @@ spec:
     command:
     - cat
     tty: true
-    args:
-    - --entrypoint=
   # used to run docker processes
   - name: docker
     image: docker:latest

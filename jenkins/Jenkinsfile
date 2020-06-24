@@ -93,7 +93,7 @@ spec:
         stage('install dependencies') {
             steps {
                 container('node'){
-                    sh 'ls node_modules'
+                    //sh 'ls node_modules'
                     sh 'ls /root/npmcache'
                     sh 'export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true'
                     sh 'npm install --cache=/root/npmcache'

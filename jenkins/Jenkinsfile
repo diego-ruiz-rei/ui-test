@@ -91,7 +91,9 @@ spec:
     stages {
         stage('install dependencies') {
             steps {
-                sh 'npm install --cache=/root/npmcache'
+                container('node'){
+                    sh 'npm install --cache=/root/npmcache'
+                }
             }
         }
         //Run Maven unit tests

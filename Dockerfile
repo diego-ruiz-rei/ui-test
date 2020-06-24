@@ -26,10 +26,10 @@ COPY package.json .
 #
 # ---- Dependencies ----
 FROM base AS dependencies
-RUN npm install
+#RUN npm install
 COPY ./angular.json ./package.json ./tsconfig.json ./tsconfig.app.json ./tsconfig.spec.json ./karma.conf.js ./karma-headless.conf.js sonar-project.properties tslint.json ./
 COPY ./src ./src
-RUN node -v
+COPY ./node_modules ./node_modules
 
 #
 # ---- Build ----

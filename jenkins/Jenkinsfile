@@ -106,19 +106,19 @@ spec:
                     sh 'CI=true npm run test:headless'
                 }
             }
-            // post {
-            //     always {
-            //         // publish  report
-            //         publishHTML(target: [
-            //           reportDir            : "./reports/coverage",
-            //           reportFiles          : 'index.html',
-            //           reportName           : 'Istanbul Report (Code Coverage)',
-            //           keepAll              : true,
-            //           alwaysLinkToLastBuild: true,
-            //           allowMissing         : false
-            //         ])
-            //     }
-            // }
+            post {
+                always {
+                    // publish  report
+                    publishHTML(target: [
+                      reportDir            : "./reports/coverage",
+                      reportFiles          : 'index.html',
+                      reportName           : 'Istanbul Report (Code Coverage)',
+                      keepAll              : true,
+                      alwaysLinkToLastBuild: true,
+                      allowMissing         : false
+                    ])
+                }
+            }
         }
 
         stage('SonarQube Code Analysis') {

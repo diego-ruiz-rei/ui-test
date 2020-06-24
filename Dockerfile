@@ -22,27 +22,10 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 COPY package.json .
-
-#
-# ---- Dependencies ----
-FROM base AS dependencies
-#RUN npm install
-COPY ./angular.json ./package.json ./tsconfig.json ./tsconfig.app.json ./tsconfig.spec.json ./karma.conf.js ./karma-headless.conf.js sonar-project.properties tslint.json ./
-COPY ./src ./src
-COPY ./node_modules ./node_modules
-
-#
-# ---- Build ----
-FROM dependencies AS build
-RUN npm run prod
-
-#
-# ---- Release ----
-FROM base AS release
-COPY --from=build /usr/src/app/dist ./dist
-
 #copy configured nginx file
 COPY nginx/ /etc/nginx/conf.d
+COPY ./dist ./dist
+
 
 # Drop the root user and make the content of these path owned by user 1001
 RUN chown -R 1001:1001 /usr/src/app/dist

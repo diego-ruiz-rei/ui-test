@@ -145,9 +145,10 @@ spec:
             }
         }
 
-        stage('Build Image'){
+        stage('Build and Deploy Image'){
             steps{
                 container('node'){
+                    sh 'npm run prod'
                     container('docker'){
                         script {
                             docker.withRegistry('', 'dockerhub') {
@@ -159,7 +160,7 @@ spec:
                 }
             }
         }
-        
+
         stage('Promote from Build to Dev') {
             environment {
                 GIT_CREDS = credentials('git')

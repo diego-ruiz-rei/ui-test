@@ -73,7 +73,7 @@ spec:
   - name: docker-sock
     hostPath: 
       path: /var/run/docker.sock
-  # cache maven dependencies onto pvc between builds
+  # cache node dependencies onto pvc between builds
   - name: node-slave-pvc2
     hostPath:
       path: /root/npmcache
@@ -92,6 +92,7 @@ spec:
         stage('install dependencies') {
             steps {
                 container('node'){
+                    sh 'ls /root/npmcache'
                     sh 'npm install --cache=/root/npmcache'
                 }
             }

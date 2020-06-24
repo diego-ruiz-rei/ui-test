@@ -72,11 +72,8 @@ spec:
   - name: node-slave-pvc2
     hostPath:
       path: /root/npmcache
-  - name: ui-demo-workspace
-    hostPath:
-      path: /root/workspace
 """
-        workspaceVolume persistentVolumeClaimWorkspaceVolume(claimName: 'ui-demo-workspace', readOnly: false)
+        workspaceVolume persistentVolumeClaimWorkspaceVolume(claimName: 'ui-demo-workspace-claim', readOnly: false)
         }
     }
 

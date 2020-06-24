@@ -73,7 +73,7 @@ spec:
     hostPath:
       path: /root/npmcache
 """
-        //workspaceVolume persistentVolumeClaimWorkspaceVolume(claimName: 'ui-demo-workspace-claim', readOnly: false)
+        workspaceVolume dynamicPVC()
         }
     }
 
